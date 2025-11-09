@@ -1,0 +1,301 @@
+import React, { useEffect, useState } from 'react';
+import { ConfigProvider, theme, Card, Tabs, Space, Button, message, Modal } from 'antd';
+import zhCN from 'antd/locale/zh_CN';
+import {
+  FileTextOutlined,
+  PrinterOutlined,
+  SettingOutlined,
+  BarChartOutlined,
+  SyncOutlined,
+  ToolOutlined,
+} from '@ant-design/icons';
+import 'antd/dist/reset.css';
+
+import ApprovalRecordsList from './components/ApprovalRecordsList';
+import TemplateManager from './components/TemplateManager';
+import PrintCenter from './components/PrintCenter';
+import Statistics from './components/Statistics';
+import AppSettings from './components/AppSettings';
+import EnvironmentStatus from './components/EnvironmentStatus';
+import { feishuSDK } from './services/feishu-sdk';
+import './App.css';
+
+const { TabPane } = Tabs;
+
+const App: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('records');
+  const [loading, setLoading] = useState(true);
+  const [appInfo, setAppInfo] = useState<any>(null);
+  const [showSettings, setShowSettings] = useState(false);
+
+  // 初始化应用
+  useEffect(() => {
+    const initApp = async () => {
+      try {
+        await feishuSDK.init();
+
+        const context = feishuSDK.getContext();
+        setAppInfo(context);
+
+        // 移除加载动画
+        const loadingElement = document.getElementById('loading');
+        if (loadingElement) {
+          loadingElement.style.display = 'none';
+        }
+
+        setLoading(false);
+
+        message.success('飞书审批打印插件启动成功', 2);
+      } catch (error) {
+        console.error('应用初始化失败:', error);
+
+        // 移除加载动画
+        const loadingElement = document.getElementById('loading');
+        if (loadingElement) {
+          loadingElement.style.display = 'none';
+        }
+
+        setLoading(false);
+
+        // 检查上下文是否存在
+        const context = feishuSDK.getContext();
+        if (!context) {
+          message.error('未在飞书环境中运行，请在飞书多维表格中使用此应用', 5);
+        } else {
+          message.error('应用初始化失败，请检查应用配置', 3);
+        }
+      }
+    };
+
+    initApp();
+  }, []);
+
+  // 同步数据
+  const handleSyncAll = async () => {
+    try {
+      setLoading(true);
+      message.info('开始同步数据...', 2);
+
+      // 模拟同步过程
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      message.success('数据同步完成', 2);
+    } catch (error) {
+      message.error('同步失败', 2);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 检查是否在飞书环境中
+  const isFeishuEnvironment = window.location.href.includes('feishu.cn') ||
+                             window.location.href.includes('larksuite.com') ||
+                             window.location.href.includes('fs.huidu.cn');
+
+  // 检查是否有有效的应用配置
+  const hasValidConfig = appInfo && appInfo.appId && appInfo.tableId;
+
+  // 渲染标签页内容
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'records':
+        return <ApprovalRecordsList />;
+      case 'templates':
+        return <TemplateManager />;
+      case 'print':
+        return <PrintCenter />;
+      case 'statistics':
+        return <Statistics />;
+      case 'settings':
+        return <AppSettings />;
+      default:
+        return <ApprovalRecordsList />;
+    }
+  };
+
+  // 如果没有有效的飞书环境，显示环境状态页面
+  if (!isFeishuEnvironment || !hasValidConfig) {
+    return (
+      <ConfigProvider
+        locale={zhCN}
+        theme={{
+          algorithm: theme.defaultAlgorithm,
+          token: {
+            colorPrimary: '#1890ff',
+            borderRadius: 8,
+          },
+        }}
+      >
+        <div className="app-container">
+          {/* 简化的头部 */}
+          <div className="app-header">
+            <div className="header-content">
+              <div className="header-left">
+                <h1 className="app-title">
+                  🖨️ 飞书审批打印插件
+                </h1>
+              </div>
+              <div className="header-right">
+                <Button
+                  icon={<ToolOutlined />}
+                  onClick={() => setActiveTab('settings')}
+                >
+                  应用配置
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* 环境状态页面 */}
+          <div className="app-content">
+            {activeTab === 'settings' ? (
+              <AppSettings />
+            ) : (
+              <EnvironmentStatus
+                appInfo={appInfo}
+                onOpenSettings={() => setActiveTab('settings')}
+              />
+            )}
+          </div>
+        </div>
+      </ConfigProvider>
+    );
+  }
+
+  // 正常的飞书环境应用界面
+  return (
+    <ConfigProvider
+      locale={zhCN}
+      theme={{
+        algorithm: theme.defaultAlgorithm,
+        token: {
+          colorPrimary: '#1890ff',
+          borderRadius: 8,
+        },
+      }}
+    >
+      <div className="app-container">
+        {/* 头部区域 */}
+        <div className="app-header">
+          <div className="header-content">
+            <div className="header-left">
+              <h1 className="app-title">
+                🖨️ 飞书审批打印插件
+              </h1>
+              {appInfo && (
+                <div className="app-info">
+                  <span className="info-item">
+                    表格ID: <code>{appInfo.tableId}</code>
+                  </span>
+                  <span className="info-item">
+                    用户ID: <code>{appInfo.userId}</code>
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="header-right">
+              <Space>
+                <Button
+                  icon={<SyncOutlined />}
+                  onClick={handleSyncAll}
+                  loading={loading}
+                >
+                  同步数据
+                </Button>
+                <Button
+                  icon={<ToolOutlined />}
+                  onClick={() => {
+                    setActiveTab('settings');
+                  }}
+                >
+                  应用配置
+                </Button>
+              </Space>
+            </div>
+          </div>
+        </div>
+
+        {/* 主要内容区域 */}
+        <div className="app-content">
+          <Card
+            bordered={false}
+            style={{ minHeight: 'calc(100vh - 120px)' }}
+            bodyStyle={{ padding: 0 }}
+          >
+            <Tabs
+              activeKey={activeTab}
+              onChange={setActiveTab}
+              type="card"
+              size="large"
+              items={[
+                {
+                  key: 'records',
+                  label: (
+                    <span>
+                      <FileTextOutlined />
+                      审批记录
+                    </span>
+                  ),
+                  children: renderTabContent(),
+                },
+                {
+                  key: 'templates',
+                  label: (
+                    <span>
+                      <SettingOutlined />
+                      模板管理
+                    </span>
+                  ),
+                  children: renderTabContent(),
+                },
+                {
+                  key: 'print',
+                  label: (
+                    <span>
+                      <PrinterOutlined />
+                      打印中心
+                    </span>
+                  ),
+                  children: renderTabContent(),
+                },
+                {
+                  key: 'statistics',
+                  label: (
+                    <span>
+                      <BarChartOutlined />
+                      数据统计
+                    </span>
+                  ),
+                  children: renderTabContent(),
+                },
+                {
+                  key: 'settings',
+                  label: (
+                    <span>
+                      <ToolOutlined />
+                      应用配置
+                    </span>
+                  ),
+                  children: renderTabContent(),
+                },
+              ]}
+            />
+          </Card>
+        </div>
+
+        {/* 底部信息 */}
+        <div className="app-footer">
+          <div className="footer-content">
+            <span>© 2024 飞书审批打印插件 v1.0.0</span>
+            <span>
+              {!appInfo ? '模拟数据模式' : '飞书集成模式'}
+            </span>
+          </div>
+        </div>
+      </div>
+    </ConfigProvider>
+  );
+};
+
+export default App;

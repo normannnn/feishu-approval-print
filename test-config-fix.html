@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配置功能测试</title>
+</head>
+<body>
+    <h1>🧪 应用配置功能测试</h1>
+
+    <h2>1. 环境变量测试</h2>
+    <script>
+        console.log('🔍 测试环境变量访问...');
+
+        // 测试 window.__ENV__
+        if (window.__ENV__) {
+            console.log('✅ window.__ENV__ 可用:', window.__ENV__);
+            document.write('<p>✅ window.__ENV__ 可用</p>');
+        } else {
+            console.log('❌ window.__ENV__ 不可用');
+            document.write('<p>❌ window.__ENV__ 不可用</p>');
+        }
+
+        // 测试 process.env
+        try {
+            if (process.env) {
+                console.log('✅ process.env 可用:', process.env);
+                document.write('<p>✅ process.env 可用</p>');
+            } else {
+                console.log('❌ process.env 不可用');
+                document.write('<p>❌ process.env 不可用</p>');
+            }
+        } catch (error) {
+            console.log('❌ process.env 访问错误:', error.message);
+            document.write('<p>❌ process.env 访问错误: ' + error.message + '</p>');
+        }
+
+        // 测试 import.meta.env
+        try {
+            if (import.meta.env) {
+                console.log('✅ import.meta.env 可用:', import.meta.env);
+                document.write('<p>✅ import.meta.env 可用</p>');
+            } else {
+                console.log('❌ import.meta.env 不可用');
+                document.write('<p>❌ import.meta.env 不可用</p>');
+            }
+        } catch (error) {
+            console.log('❌ import.meta.env 访问错误:', error.message);
+            document.write('<p>❌ import.meta.env 访问错误: ' + error.message + '</p>');
+        }
+    </script>
+
+    <h2>2. 应用访问测试</h2>
+    <p><a href="http://localhost:3002" target="_blank">🚀 打开飞书审批打印插件</a></p>
+
+    <h2>3. 功能测试清单</h2>
+    <ol>
+        <li>点击"应用配置"标签页或按钮</li>
+        <li>在"基本配置"标签页填写测试数据：
+            <ul>
+                <li>App ID: cli_test123456789</li>
+                <li>App Secret: test_secret_32_characters_long_123456</li>
+            </ul>
+        </li>
+        <li>点击"保存配置"按钮</li>
+        <li>切换到"当前配置"标签页验证保存结果</li>
+        <li>刷新页面验证配置持久化</li>
+    </ol>
+
+    <h2>4. 错误测试</h2>
+    <button onclick="testProcessAccess()">测试 process 访问</button>
+    <div id="error-result"></div>
+
+    <script>
+        function testProcessAccess() {
+            const resultDiv = document.getElementById('error-result');
+            try {
+                // 这个应该会抛出错误
+                const testVar = process;
+                resultDiv.innerHTML = '<p style="color: green;">✅ 意外成功: process 可用</p>';
+            } catch (error) {
+                resultDiv.innerHTML = '<p style="color: red;">❌ 预期错误: ' + error.message + '</p>';
+                console.log('预期的 process 访问错误:', error);
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        p {
+            margin: 10px 0;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</body>
+</html>
