@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ConfigProvider, theme, Card, Tabs, Space, Button, message } from 'antd';
+import { ConfigProvider, theme, Card, Tabs, Space, Button, message, Badge, Tooltip } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import {
   FileTextOutlined,
@@ -8,6 +8,14 @@ import {
   BarChartOutlined,
   SyncOutlined,
   ToolOutlined,
+  CloudOutlined,
+  UserOutlined,
+  LoginOutlined,
+  LogoutOutlined,
+  DatabaseOutlined,
+  WifiOutlined,
+  DisconnectOutlined,
+  ExclamationCircleOutlined,
 } from '@ant-design/icons';
 import 'antd/dist/reset.css';
 
@@ -18,12 +26,33 @@ import Statistics from './components/Statistics';
 import AppSettings from './components/AppSettings';
 import EnvironmentStatus from './components/EnvironmentStatus';
 import { feishuSDK } from './services/feishu-sdk';
+import { AuthProvider, useAuth } from './components/AuthProvider';
+import LoginModal from './components/LoginModal';
+import MigrationModal from './components/MigrationModal';
 import './App.css';
 
-const App: React.FC = () => {
+// 内部应用组件，使用认证上下文
+const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState('records');
   const [loading, setLoading] = useState(true);
   const [appInfo, setAppInfo] = useState<any>(null);
+  const [loginModalVisible, setLoginModalVisible] = useState(false);
+  const [migrationModalVisible, setMigrationModalVisible] = useState(false);
+
+  const {
+    user,
+    isAuthenticated,
+    isLoading: authLoading,
+    syncState,
+    needsMigration,
+    isMigrating,
+    signInWithEmail,
+    signInWithFeishu,
+    signUp,
+    signOut,
+    manualSync,
+    startMigration,
+  } = useAuth();
 
   // 初始化应用
   useEffect(() => {
@@ -33,50 +62,68 @@ const App: React.FC = () => {
         await feishuSDK.init();
         const context = feishuSDK.getContext();
         setAppInfo(context);
-
-        // 移除加载动画
-        const loadingElement = document.getElementById('loading');
-        if (loadingElement) {
-          loadingElement.style.display = 'none';
-        }
-
-        setLoading(false);
-
-        message.success('审批打印插件启动成功！', 2);
       } catch (error) {
         console.log('独立浏览器模式：使用模拟数据运行', error);
-
+      } finally {
         // 移除加载动画
         const loadingElement = document.getElementById('loading');
         if (loadingElement) {
           loadingElement.style.display = 'none';
         }
-
         setLoading(false);
-
-        // 在独立浏览器模式下提供友好的提示
-        message.info('正在使用演示数据模式', 2);
       }
     };
 
-    initApp();
-  }, []);
+    if (!authLoading) {
+      initApp();
+    }
+  }, [authLoading]);
+
+  // 检查是否需要显示迁移提示
+  useEffect(() => {
+    if (isAuthenticated && needsMigration && !isMigrating) {
+      setMigrationModalVisible(true);
+    }
+  }, [isAuthenticated, needsMigration, isMigrating]);
 
   // 同步数据
   const handleSyncAll = async () => {
     try {
-      setLoading(true);
-      message.info('开始同步数据...', 2);
-
-      // 模拟同步过程
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      message.success('数据同步完成', 2);
+      if (isAuthenticated) {
+        await manualSync();
+      } else {
+        message.info('请先登录以启用云端同步功能');
+        setLoginModalVisible(true);
+      }
     } catch (error) {
-      message.error('同步失败', 2);
-    } finally {
-      setLoading(false);
+      message.error('同步失败');
     }
+  };
+
+  // 获取同步状态显示
+  const getSyncStatusDisplay = () => {
+    if (!isAuthenticated) {
+      return (
+        <Tooltip title="未登录，数据仅保存在本地">
+          <Badge status="default" text="离线模式" />
+        </Tooltip>
+      );
+    }
+
+    const statusConfig = {
+      offline: { status: 'default' as const, text: '离线模式', icon: <DisconnectOutlined /> },
+      syncing: { status: 'processing' as const, text: '同步中...', icon: <SyncOutlined spin /> },
+      synced: { status: 'success' as const, text: '已同步', icon: <WifiOutlined /> },
+      conflict: { status: 'warning' as const, text: '有冲突', icon: <ExclamationCircleOutlined /> },
+      error: { status: 'error' as const, text: '同步错误', icon: <DisconnectOutlined /> },
+    };
+
+    const config = statusConfig[syncState?.status || 'offline'];
+    return (
+      <Tooltip title={config.text}>
+        <Badge status={config.status} text={config.text} />
+      </Tooltip>
+    );
   };
 
   // 独立浏览器模式：始终显示完整应用界面
@@ -169,16 +216,21 @@ const App: React.FC = () => {
               <h1 className="app-title">
                 🖨️ 审批打印插件
               </h1>
-              {appInfo && (
-                <div className="app-info">
-                  <span className="info-item">
-                    表格ID: <code>{appInfo.tableId}</code>
-                  </span>
-                  <span className="info-item">
-                    用户ID: <code>{appInfo.userId}</code>
-                  </span>
-                </div>
-              )}
+              <div className="app-info">
+                {appInfo && (
+                  <>
+                    <span className="info-item">
+                      表格ID: <code>{appInfo.tableId}</code>
+                    </span>
+                    <span className="info-item">
+                      用户ID: <code>{appInfo.userId}</code>
+                    </span>
+                  </>
+                )}
+                <span className="info-item sync-status">
+                  {getSyncStatusDisplay()}
+                </span>
+              </div>
             </div>
 
             <div className="header-right">
@@ -188,13 +240,34 @@ const App: React.FC = () => {
                   onClick={handleSyncAll}
                   loading={loading}
                 >
-                  刷新数据
+                  {isAuthenticated ? '同步数据' : '刷新数据'}
                 </Button>
+                {isAuthenticated ? (
+                  <Space>
+                    <Tooltip title={`${user?.name} (${user?.email})`}>
+                      <Button icon={<UserOutlined />}>
+                        {user?.name}
+                      </Button>
+                    </Tooltip>
+                    <Button
+                      icon={<LogoutOutlined />}
+                      onClick={signOut}
+                >
+                  退出登录
+                </Button>
+              </Space>
+                ) : (
+                  <Button
+                    type="primary"
+                    icon={<LoginOutlined />}
+                    onClick={() => setLoginModalVisible(true)}
+                  >
+                    登录
+                  </Button>
+                )}
                 <Button
                   icon={<ToolOutlined />}
-                  onClick={() => {
-                    setActiveTab('settings');
-                  }}
+                  onClick={() => setActiveTab('settings')}
                 >
                   系统设置
                 </Button>
@@ -281,8 +354,27 @@ const App: React.FC = () => {
             </span>
           </div>
         </div>
+
+        {/* 认证相关模态框 */}
+        <LoginModal
+          visible={loginModalVisible}
+          onClose={() => setLoginModalVisible(false)}
+        />
+        <MigrationModal
+          visible={migrationModalVisible}
+          onClose={() => setMigrationModalVisible(false)}
+        />
       </div>
     </ConfigProvider>
+  );
+};
+
+// 主App组件，包装AuthProvider
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 };
 

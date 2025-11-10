@@ -112,32 +112,76 @@ const generateCSS = (config: any, styles: any) => {
       color: #666;
     }
 
-    /* 信息表格样式 */
+    /* 信息表格样式 - 增强边框清晰度 */
     .info-table {
       width: 100%;
       border-collapse: collapse;
       margin-bottom: 20px;
       font-size: 12px;
+      border: 2px solid #333 !important; /* 外边框加粗 */
     }
 
     .info-table th,
     .info-table td {
-      border: 1px solid #ddd;
+      border: 1px solid #333 !important; /* 内部边框清晰 */
       padding: 8px 12px;
       text-align: left;
       vertical-align: middle;
+      position: relative;
     }
 
     .info-table th {
       background-color: #f8f9fa;
-      font-weight: 600;
+      font-weight: 700;
       width: 120px;
       color: #333;
+      border-bottom: 2px solid #333 !important; /* 表头底部边框加粗 */
     }
 
     .info-table td {
       background-color: #fff;
       color: #262626;
+    }
+
+    /* 增强表格行交替颜色 */
+    .info-table tr:nth-child(even) td {
+      background-color: #fafafa;
+    }
+
+    /* 悬停效果（在屏幕上可见） */
+    @media screen {
+      .info-table tr:hover td {
+        background-color: #e6f7ff !important;
+      }
+    }
+
+    /* 打印时确保边框清晰 */
+    @media print {
+      .info-table {
+        border: 2px solid #000 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .info-table th,
+      .info-table td {
+        border: 1px solid #000 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .info-table th {
+        border-bottom: 2px solid #000 !important;
+        background-color: #f0f0f0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .info-table tr:nth-child(even) td {
+        background-color: #f9f9f9 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
     }
 
     /* 审批节点样式 */

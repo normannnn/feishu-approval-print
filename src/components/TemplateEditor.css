@@ -1,0 +1,596 @@
+.template-editor {
+  padding: 16px;
+  background: #fafafa;
+  min-height: 600px;
+}
+
+/* 工具栏样式 */
+.editor-toolbar {
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.toolbar-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toolbar-section .ant-space {
+  flex: 1;
+}
+
+.toolbar-section span {
+  font-weight: 500;
+  color: #262626;
+  white-space: nowrap;
+}
+
+.editor-toolbar .ant-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 模板库样式 */
+.template-library {
+  background: #f8f9fa;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #e8e8e8;
+}
+
+.library-header {
+  margin-bottom: 8px;
+}
+
+.library-header span {
+  font-weight: 500;
+  color: #262626;
+}
+
+.library-content {
+  display: flex;
+  align-items: center;
+}
+
+.library-content .ant-space {
+  width: 100%;
+}
+
+.library-content .ant-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-style: dashed;
+}
+
+.library-content .ant-btn:hover {
+  border-color: #1890ff;
+  color: #1890ff;
+}
+
+/* 编辑区域样式 */
+.editor-content {
+  position: relative;
+}
+
+.editor-canvas {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  min-height: 500px;
+  position: relative;
+}
+
+/* React Grid Layout 自定义样式 */
+.layout {
+  position: relative !important;
+}
+
+.grid-item {
+  background: #f9f9f9;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 8px;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.grid-item:hover {
+  border-color: #1890ff;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+}
+
+.grid-item.react-grid-placeholder {
+  background: rgba(24, 144, 255, 0.15);
+  border: 2px dashed #1890ff;
+  border-radius: 6px;
+  opacity: 1;
+  transition: all 0.2s ease;
+}
+
+.react-draggable-dragging {
+  z-index: 1000;
+  opacity: 0.9;
+  transform: rotate(2deg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.react-resizable {
+  position: relative;
+}
+
+.react-resizable-handle {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: #1890ff;
+  border: 2px solid white;
+  border-radius: 50%;
+  bottom: 0;
+  right: 0;
+  cursor: se-resize;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.grid-item:hover .react-resizable-handle {
+  opacity: 1;
+}
+
+/* 模板字段样式 */
+.template-field {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 4px;
+  position: relative;
+}
+
+.template-field.selected {
+  border: 2px solid #1890ff;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.2);
+}
+
+.template-field.preview {
+  border-color: #e0e0e0;
+  cursor: default;
+}
+
+.template-field.edit {
+  cursor: move;
+}
+
+.field-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.field-label {
+  font-weight: 500;
+  color: #262626;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.field-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.template-field:hover .field-actions {
+  opacity: 1;
+}
+
+.field-actions .ant-btn {
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.field-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+/* 签名占位符样式 */
+.signature-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  border: 2px dashed #d9d9d9;
+  border-radius: 4px;
+  color: #8c8c8c;
+  background: #fafafa;
+  min-height: 60px;
+}
+
+.signature-placeholder .anticon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.signature-placeholder span {
+  font-size: 12px;
+}
+
+/* 空状态样式 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  color: #8c8c8c;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-text {
+  text-align: center;
+}
+
+.empty-text h3 {
+  margin: 0 0 8px 0;
+  color: #595959;
+  font-size: 16px;
+}
+
+.empty-text p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .template-editor {
+    padding: 12px;
+  }
+
+  .editor-toolbar {
+    gap: 8px;
+  }
+
+  .toolbar-section {
+    gap: 8px;
+  }
+
+  .template-library {
+    padding: 8px 12px;
+  }
+
+  .library-content .ant-space {
+    flex-wrap: wrap;
+  }
+
+  .editor-canvas {
+    overflow-x: auto;
+  }
+
+  .layout {
+    min-width: 800px;
+  }
+}
+
+@media (max-width: 992px) {
+  .toolbar-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .toolbar-section .ant-space {
+    flex-wrap: wrap;
+  }
+
+  .library-content .ant-btn {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .template-editor {
+    padding: 8px;
+  }
+
+  .editor-toolbar {
+    padding: 8px;
+    gap: 6px;
+  }
+
+  .toolbar-section {
+    gap: 4px;
+  }
+
+  .toolbar-section span {
+    font-size: 12px;
+  }
+
+  .toolbar-section .ant-select {
+    width: 140px !important;
+  }
+
+  .toolbar-section .ant-btn {
+    font-size: 12px;
+    padding: 2px 6px;
+    height: auto;
+    min-height: 32px;
+  }
+
+  .template-library {
+    padding: 6px 8px;
+  }
+
+  .library-header span {
+    font-size: 12px;
+  }
+
+  .library-content .ant-btn {
+    font-size: 11px;
+    padding: 2px 4px;
+    height: auto;
+    min-height: 28px;
+  }
+
+  .grid-item {
+    padding: 4px;
+  }
+
+  .field-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .field-actions {
+    opacity: 1;
+    align-self: flex-end;
+  }
+
+  .react-resizable-handle {
+    opacity: 1;
+  }
+
+  .layout {
+    min-width: 100%;
+  }
+
+  .editor-canvas .ant-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 576px) {
+  .template-editor {
+    padding: 4px;
+  }
+
+  .editor-toolbar {
+    padding: 4px;
+    gap: 4px;
+  }
+
+  .toolbar-section {
+    gap: 2px;
+  }
+
+  .toolbar-section span {
+    font-size: 11px;
+  }
+
+  .toolbar-section .ant-select {
+    width: 120px !important;
+  }
+
+  .toolbar-section .ant-btn {
+    font-size: 10px;
+    padding: 1px 4px;
+    height: auto;
+    min-height: 24px;
+  }
+
+  .template-library {
+    padding: 4px;
+  }
+
+  .library-header span {
+    font-size: 11px;
+  }
+
+  .library-content .ant-btn {
+    font-size: 10px;
+    padding: 1px 3px;
+    height: auto;
+    min-height: 24px;
+  }
+
+  .grid-item {
+    padding: 2px;
+  }
+
+  .field-label {
+    font-size: 11px;
+  }
+
+  .field-content {
+    font-size: 12px;
+  }
+
+  .signature-placeholder {
+    min-height: 40px;
+  }
+
+  .signature-placeholder .anticon {
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+
+  .signature-placeholder span {
+    font-size: 10px;
+  }
+
+  .field-actions .ant-btn {
+    width: 100%;
+    margin: 0;
+    padding: 1px 2px;
+    font-size: 10px;
+    height: 20px;
+  }
+
+  /* 模态框内优化 */
+  .ant-modal {
+    margin: 4px;
+    max-width: calc(100vw - 8px);
+  }
+
+  .ant-modal-content {
+    max-height: calc(100vh - 8px);
+    overflow-y: auto;
+  }
+}
+
+/* 拖拽状态优化 */
+.react-grid-item {
+  transition: none;
+}
+
+.react-grid-item.cssTransforms {
+  transition: transform 200ms ease, opacity 200ms ease;
+}
+
+.react-grid-item > .react-resizable-handle {
+  position: absolute;
+  z-index: 10;
+}
+
+.react-grid-item:hover > .react-resizable-handle {
+  opacity: 1;
+}
+
+/* 模态框内布局优化 */
+.ant-modal-body {
+  padding: 16px;
+}
+
+.ant-modal-wrap .template-editor {
+  margin: -16px;
+}
+
+/* 颜色选择器样式 */
+.ant-color-picker {
+  width: 100%;
+}
+
+.ant-color-picker-trigger {
+  width: 100% !important;
+}
+
+/* 字段类型特定样式 */
+.template-field[data-type="signature"] {
+  background: #f0f8ff;
+}
+
+.template-field[data-type="textarea"] {
+  background: #fafafa;
+}
+
+.template-field[data-type="select"] {
+  background: #fff9e6;
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.grid-item {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* 工具提示样式 */
+.field-tooltip {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.template-field:hover .field-tooltip {
+  opacity: 1;
+}
+
+/* 打印优化 */
+@media print {
+  .template-editor {
+    background: white;
+    box-shadow: none;
+  }
+
+  .editor-toolbar {
+    display: none;
+  }
+
+  .grid-item {
+    border: 1px solid #e0e0e0;
+    box-shadow: none;
+    page-break-inside: avoid;
+  }
+
+  .field-actions {
+    display: none;
+  }
+
+  .react-resizable-handle {
+    display: none;
+  }
+}
