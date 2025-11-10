@@ -101,17 +101,34 @@ const TemplateManager: React.FC = () => {
       render: (text: any, record: Template) => (
         <Space size="small">
           <Tooltip title="预览">
-            <Button type="text" icon={<EyeOutlined />} />
+            <Button
+              type="text"
+              icon={<EyeOutlined />}
+              onClick={() => handlePreview(record)}
+            />
           </Tooltip>
           <Tooltip title="编辑">
-            <Button type="text" icon={<EditOutlined />} />
+            <Button
+              type="text"
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+            />
           </Tooltip>
           <Tooltip title="复制">
-            <Button type="text" icon={<CopyOutlined />} />
+            <Button
+              type="text"
+              icon={<CopyOutlined />}
+              onClick={() => handleCopy(record)}
+            />
           </Tooltip>
           {!record.is_default && (
             <Tooltip title="删除">
-              <Button type="text" danger icon={<DeleteOutlined />} />
+              <Button
+                type="text"
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => handleDelete(record)}
+              />
             </Tooltip>
           )}
         </Space>
@@ -140,6 +157,24 @@ const TemplateManager: React.FC = () => {
         message.success('删除成功');
       },
     });
+  };
+
+  const handlePreview = (template: Template) => {
+    message.info(`预览模板: ${template.name}`);
+    // TODO: 实现模板预览功能
+  };
+
+  const handleCopy = (template: Template) => {
+    const newTemplate: Template = {
+      ...template,
+      id: Date.now().toString(),
+      name: `${template.name} - 副本`,
+      is_default: false,
+      created_time: new Date().toISOString(),
+      updated_time: new Date().toISOString(),
+    };
+    setTemplates([...templates, newTemplate]);
+    message.success('复制成功');
   };
 
   const handleModalOk = () => {

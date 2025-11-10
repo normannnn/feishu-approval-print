@@ -54,9 +54,28 @@ class FeishuBitableSDK {
         }
 
         if (!appConfig || !appConfig.appId || !appConfig.appSecret) {
-          console.error('未找到有效的应用配置，请在应用配置页面设置App ID和App Secret');
-          this.context = null;
-          return;
+          // 本地开发时提供模拟配置
+          const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+          if (isDevelopment) {
+            console.log('本地开发环境：使用模拟配置');
+            this.context = {
+              appId: 'dev_mock_app_id',
+              tableId: 'dev_mock_table_id',
+              viewId: 'dev_mock_view_id',
+              userId: 'dev_mock_user_id',
+              tenantKey: 'dev_mock_tenant_key',
+              appConfig: {
+                appId: appConfig?.appId || 'dev_mock_app_id',
+                appSecret: appConfig?.appSecret || 'dev_mock_app_secret',
+                redirectUri: 'http://localhost:3002'
+              }
+            };
+            return;
+          } else {
+            console.error('未找到有效的应用配置，请在应用配置页面设置App ID和App Secret');
+            this.context = null;
+            return;
+          }
         }
 
         // 仅在飞书环境中动态导入SDK，使用eval避免webpack编译时解析
@@ -118,6 +137,12 @@ class FeishuBitableSDK {
     sort?: string;
     filter?: string;
   } = {}): Promise<{ records: BitableRecord[]; hasMore: boolean; pageToken?: string }> {
+    // 本地开发时返回模拟数据
+    const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isDevelopment) {
+      return this.getDevMockRecords();
+    }
+
     const tableId = this.getTableId();
     if (!tableId) {
       throw new Error('表格ID未获取到，请确保在飞书多维表格中使用此应用');
@@ -152,6 +177,12 @@ class FeishuBitableSDK {
    * 获取记录详情
    */
   async getRecord(recordId: string): Promise<BitableRecord | null> {
+    // 本地开发时返回模拟数据
+    const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isDevelopment) {
+      return this.getDevMockRecord(recordId);
+    }
+
     const tableId = this.getTableId();
     if (!tableId) {
       throw new Error('表格ID未获取到，请确保在飞书多维表格中使用此应用');
@@ -210,6 +241,12 @@ class FeishuBitableSDK {
    * 获取字段信息
    */
   async getFields(): Promise<BitableField[]> {
+    // 本地开发时返回模拟数据
+    const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isDevelopment) {
+      return this.getDevMockFields();
+    }
+
     const tableId = this.getTableId();
     if (!tableId) {
       throw new Error('表格ID未获取到，请确保在飞书多维表格中使用此应用');
@@ -232,6 +269,12 @@ class FeishuBitableSDK {
    * 获取视图信息
    */
   async getViews(): Promise<BitableView[]> {
+    // 本地开发时返回模拟数据
+    const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isDevelopment) {
+      return this.getDevMockViews();
+    }
+
     const tableId = this.getTableId();
     if (!tableId) {
       throw new Error('表格ID未获取到，请确保在飞书多维表格中使用此应用');
@@ -344,8 +387,93 @@ class FeishuBitableSDK {
     }
   }
 
-  // 注意：已移除所有模拟数据方法，现在只使用真实的飞书API
-// 请确保在飞书多维表格环境中使用此应用
+  // 开发环境下的模拟数据方法
+  private getDevMockRecords() {
+    const mockRecords: BitableRecord[] = [
+      {
+        record_id: 'dev_rec001',
+        fields: {
+          '审批实例ID': 'dev_instance_001',
+          '审批类型': '请假审批',
+          '申请人': '开发测试员',
+          '申请部门': '技术开发部',
+          '审批状态': '已通过',
+          '申请时间': '2024-11-09 10:30:00',
+          '审批时间': '2024-11-09 15:45:00',
+          '审批人': '张经理',
+          '申请天数': '2天',
+          '请假事由': '家庭事务'
+        },
+        created_time: Date.now() - 86400000,
+        last_modified_time: Date.now() - 3600000,
+      },
+      {
+        record_id: 'dev_rec002',
+        fields: {
+          '审批实例ID': 'dev_instance_002',
+          '审批类型': '报销审批',
+          '申请人': '产品经理',
+          '申请部门': '产品设计部',
+          '审批状态': '待审批',
+          '申请时间': '2024-11-09 09:15:00',
+          '报销金额': '￥1,500.00',
+          '报销类型': '差旅费',
+          '报销事由': '客户拜访交通费用'
+        },
+        created_time: Date.now() - 172800000,
+        last_modified_time: Date.now() - 7200000,
+      },
+      {
+        record_id: 'dev_rec003',
+        fields: {
+          '审批实例ID': 'dev_instance_003',
+          '审批类型': '采购审批',
+          '申请人': '运维工程师',
+          '申请部门': '技术运维部',
+          '审批状态': '已拒绝',
+          '申请时间': '2024-11-08 14:20:00',
+          '审批时间': '2024-11-09 11:00:00',
+          '采购物品': '服务器硬盘',
+          '采购金额': '￥3,200.00',
+          '拒绝原因': '预算超支，需要重新申请'
+        },
+        created_time: Date.now() - 259200000,
+        last_modified_time: Date.now() - 10800000,
+      }
+    ];
+
+    console.log('🚀 本地开发模式：返回模拟审批记录', mockRecords.length, '条');
+    return { records: mockRecords, hasMore: false };
+  }
+
+  private getDevMockRecord(recordId: string): BitableRecord | null {
+    const mockData = this.getDevMockRecords();
+    return mockData.records.find(r => r.record_id === recordId) || null;
+  }
+
+  private getDevMockFields(): BitableField[] {
+    return [
+      { field_id: 'dev_field1', field_name: '审批实例ID', type: 'text', property: {} },
+      { field_id: 'dev_field2', field_name: '审批类型', type: 'select', property: {} },
+      { field_id: 'dev_field3', field_name: '申请人', type: 'text', property: {} },
+      { field_id: 'dev_field4', field_name: '申请部门', type: 'text', property: {} },
+      { field_id: 'dev_field5', field_name: '审批状态', type: 'select', property: {} },
+      { field_id: 'dev_field6', field_name: '申请时间', type: 'datetime', property: {} },
+      { field_id: 'dev_field7', field_name: '审批时间', type: 'datetime', property: {} },
+      { field_id: 'dev_field8', field_name: '审批人', type: 'text', property: {} },
+    ];
+  }
+
+  private getDevMockViews(): BitableView[] {
+    return [
+      { view_id: 'dev_view1', view_name: '所有记录', type: 'grid' },
+      { view_id: 'dev_view2', view_name: '待审批', type: 'grid' },
+      { view_id: 'dev_view3', view_name: '已通过', type: 'grid' },
+      { view_id: 'dev_view4', view_name: '已拒绝', type: 'grid' },
+    ];
+  }
+
+  // 注意：本地开发环境使用模拟数据，生产环境使用真实的飞书API
 }
 
 // 创建单例实例

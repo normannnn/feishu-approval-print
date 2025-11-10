@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ConfigProvider, theme, Card, Tabs, Space, Button, message, Modal } from 'antd';
+import { ConfigProvider, theme, Card, Tabs, Space, Button, message } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import {
   FileTextOutlined,
@@ -20,13 +20,10 @@ import EnvironmentStatus from './components/EnvironmentStatus';
 import { feishuSDK } from './services/feishu-sdk';
 import './App.css';
 
-const { TabPane } = Tabs;
-
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('records');
   const [loading, setLoading] = useState(true);
   const [appInfo, setAppInfo] = useState<any>(null);
-  const [showSettings, setShowSettings] = useState(false);
 
   // 初始化应用
   useEffect(() => {
@@ -92,8 +89,14 @@ const App: React.FC = () => {
                              window.location.href.includes('larksuite.com') ||
                              window.location.href.includes('fs.huidu.cn');
 
+  // 开发环境跳过飞书环境检查
+  const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
   // 检查是否有有效的应用配置
   const hasValidConfig = appInfo && appInfo.appId && appInfo.tableId;
+
+  // 本地开发时，强制显示完整应用界面
+  const shouldShowFullApp = isDevelopment || (isFeishuEnvironment && hasValidConfig);
 
   // 渲染标签页内容
   const renderTabContent = () => {
@@ -113,8 +116,8 @@ const App: React.FC = () => {
     }
   };
 
-  // 如果没有有效的飞书环境，显示环境状态页面
-  if (!isFeishuEnvironment || !hasValidConfig) {
+  // 如果没有有效的飞书环境且不在开发环境，显示环境状态页面
+  if (!shouldShowFullApp) {
     return (
       <ConfigProvider
         locale={zhCN}
