@@ -108,17 +108,18 @@ class AuthService {
    */
   async signInWithFeishu(): Promise<UserProfile> {
     try {
-      // 获取飞书用户信息
-      const feishuUser = await feishuSDK.getUserInfo();
-      if (!feishuUser) {
-        throw new Error('无法获取飞书用户信息');
-      }
+      // 使用飞书认证服务
+      const { feishuAuthService } = await import('./feishuAuthService');
+
+      // 执行飞书登录
+      const feishuUser = await feishuAuthService.login();
+      console.log('飞书登录成功:', feishuUser);
 
       // 检查是否已存在用户
       const { data: existingUser } = await supabase
         .from(TABLES.USERS)
         .select('*')
-        .eq('feishu_user_id', feishuUser.userId)
+        .eq('feishu_user_id', feishuUser.user_id)
         .single();
 
       let userProfile: UserProfile;
@@ -127,12 +128,13 @@ class AuthService {
         // 用户已存在，直接登录
         userProfile = existingUser;
         await this.updateLastLogin(existingUser.id);
+        console.log('用户已存在，直接登录:', userProfile);
       } else {
         // 创建新用户
         const { data: newUser, error } = await supabase.rpc('register_user', {
-          p_email: feishuUser.email || `${feishuUser.userId}@feishu.local`,
+          p_email: feishuUser.email || `${feishuUser.user_id}@feishu.local`,
           p_name: feishuUser.name,
-          p_feishu_user_id: feishuUser.userId,
+          p_feishu_user_id: feishuUser.user_id,
         });
 
         if (error) {
@@ -140,25 +142,26 @@ class AuthService {
         }
 
         userProfile = await this.getUserProfile(newUser);
+        console.log('新用户创建成功:', userProfile);
       }
 
-      // 创建或获取Supabase用户会话
-      const { data: authData, error: authError } = await supabase.auth.signInWithIdToken({
-        provider: 'google', // 这里需要根据实际情况调整
-        token: feishuUser.accessToken || '',
-        options: {
-          redirectTo: window.location.origin,
-        },
-      });
-
-      if (authError) {
-        console.warn('Supabase认证失败，但继续使用本地用户信息:', authError);
-      }
+      // 更新飞书用户额外信息
+      await supabase
+        .from(TABLES.USERS)
+        .update({
+          avatar_url: feishuUser.avatar_url,
+          tenant_key: feishuUser.tenant_key,
+          open_id: feishuUser.open_id,
+          union_id: feishuUser.union_id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userProfile.id);
 
       this.currentUser = userProfile;
       this.notifyAuthListeners(userProfile);
       return userProfile;
     } catch (error) {
+      console.error('飞书登录失败:', error);
       throw supabaseHelpers.handleError(error);
     }
   }

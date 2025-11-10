@@ -114,6 +114,50 @@ class FeishuBitableSDK {
   }
 
   /**
+   * 获取用户信息（用于认证）
+   */
+  async getUserInfo(): Promise<{
+    userId: string;
+    name: string;
+    email?: string;
+    accessToken?: string;
+  } | null> {
+    // 本地开发环境返回模拟用户信息
+    const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isDevelopment) {
+      console.log('🚀 本地开发模式：返回模拟用户信息');
+      return {
+        userId: 'dev_mock_user_id',
+        name: '开发测试用户',
+        email: 'dev@example.com',
+        accessToken: 'dev_mock_access_token'
+      };
+    }
+
+    // 飞书环境中的真实实现
+    if (!this.context) {
+      console.warn('飞书上下文未初始化');
+      return null;
+    }
+
+    try {
+      // 从上下文中获取用户信息
+      const userInfo = {
+        userId: this.context.userId || '',
+        name: '飞书用户', // 可以从上下文或其他API获取
+        email: 'user@feishu.cn', // 可以从上下文或其他API获取
+        accessToken: 'feishu_access_token' // 可以通过OAuth流程获取
+      };
+
+      console.log('获取到飞书用户信息:', userInfo);
+      return userInfo;
+    } catch (error) {
+      console.error('获取飞书用户信息失败:', error);
+      return null;
+    }
+  }
+
+  /**
    * 获取表格ID
    */
   getTableId(): string | null {
@@ -128,7 +172,7 @@ class FeishuBitableSDK {
   }
 
   /**
-   * 获取记录列表
+   * 获取记录列表（增强版）
    */
   async getRecords(options: {
     viewId?: string;
@@ -136,11 +180,20 @@ class FeishuBitableSDK {
     pageToken?: string;
     sort?: string;
     filter?: string;
+    recordType?: 'approval' | 'all'; // 新增：记录类型筛选
   } = {}): Promise<{ records: BitableRecord[]; hasMore: boolean; pageToken?: string }> {
     // 本地开发时返回模拟数据
     const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     if (isDevelopment) {
-      return this.getDevMockRecords();
+      const mockRecords = this.getDevMockRecords();
+      // 根据记录类型筛选
+      if (options.recordType === 'approval') {
+        const approvalRecords = mockRecords.records.filter(record =>
+          record.fields['审批实例ID'] || record.fields['审批类型']
+        );
+        return { ...mockRecords, records: approvalRecords };
+      }
+      return mockRecords;
     }
 
     const tableId = this.getTableId();
@@ -156,14 +209,30 @@ class FeishuBitableSDK {
       view_id: options.viewId || this.getViewId(),
       page_size: options.pageSize || 20,
       page_token: options.pageToken,
-      sort: options.sort,
-      filter: options.filter,
+      sort: options.sort || '[{"field_name":"创建时间","desc":true}]', // 默认按创建时间倒序
+      filter: options.filter || (options.recordType === 'approval' ?
+        'OR(NOT(IS_EMPTY({审批实例ID})),NOT(IS_EMPTY({审批类型})))' : undefined),
     };
 
     try {
       const response = await this.bitable.table.getRecords(tableId, params);
+
+      // 数据处理和验证
+      const processedRecords = (response.records || []).map(record => ({
+        ...record,
+        // 确保必要字段存在
+        fields: {
+          '审批实例ID': record.fields['审批实例ID'] || '',
+          '审批类型': record.fields['审批类型'] || '其他审批',
+          '申请人': record.fields['申请人'] || '未知用户',
+          '审批状态': record.fields['审批状态'] || '待处理',
+          '申请时间': record.fields['申请时间'] || new Date().toISOString(),
+          ...record.fields
+        }
+      }));
+
       return {
-        records: response.records || [],
+        records: processedRecords,
         hasMore: response.has_more || false,
         pageToken: response.page_token,
       };

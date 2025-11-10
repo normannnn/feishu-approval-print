@@ -25,10 +25,12 @@ import PrintCenter from './components/PrintCenter';
 import Statistics from './components/Statistics';
 import AppSettings from './components/AppSettings';
 import EnvironmentStatus from './components/EnvironmentStatus';
+import FeishuCallback from './components/FeishuCallback';
 import { feishuSDK } from './services/feishu-sdk';
 import { AuthProvider, useAuth } from './components/AuthProvider';
 import LoginModal from './components/LoginModal';
 import MigrationModal from './components/MigrationModal';
+import { feishuAuthService } from './services/feishuAuthService';
 import './App.css';
 
 // 内部应用组件，使用认证上下文
@@ -38,6 +40,7 @@ const AppContent: React.FC = () => {
   const [appInfo, setAppInfo] = useState<any>(null);
   const [loginModalVisible, setLoginModalVisible] = useState(false);
   const [migrationModalVisible, setMigrationModalVisible] = useState(false);
+  const [isCallbackPage, setIsCallbackPage] = useState(false);
 
   const {
     user,
@@ -58,6 +61,13 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     const initApp = async () => {
       try {
+        // 检查是否是飞书OAuth回调
+        if (feishuAuthService.isOAuthCallback()) {
+          setIsCallbackPage(true);
+          setLoading(false);
+          return;
+        }
+
         // 尝试初始化SDK（用于飞书环境）
         await feishuSDK.init();
         const context = feishuSDK.getContext();
@@ -70,14 +80,16 @@ const AppContent: React.FC = () => {
         if (loadingElement) {
           loadingElement.style.display = 'none';
         }
-        setLoading(false);
+        if (!isCallbackPage) {
+          setLoading(false);
+        }
       }
     };
 
     if (!authLoading) {
       initApp();
     }
-  }, [authLoading]);
+  }, [authLoading, isCallbackPage]);
 
   // 检查是否需要显示迁移提示
   useEffect(() => {
@@ -194,6 +206,11 @@ const AppContent: React.FC = () => {
         </div>
       </ConfigProvider>
     );
+  }
+
+  // 如果是OAuth回调页面，显示回调处理组件
+  if (isCallbackPage) {
+    return <FeishuCallback />;
   }
 
   // 正常的飞书环境应用界面

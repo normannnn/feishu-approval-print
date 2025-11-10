@@ -7,9 +7,12 @@
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
     "dev": "npx webpack serve --mode development",
-    "build:prod": "npx webpack --mode production",
+    "build:prod": "NODE_ENV=production npx webpack --mode production",
+    "build:dev": "NODE_ENV=development npx webpack --mode development",
     "deploy": "npm run build:prod && gh-pages -d dist",
+    "deploy:preview": "npm run build:prod && npx http-server dist -p 3003 -o",
     "clean": "rm -rf dist",
+    "env:check": "node -e \"console.log('环境:', process.env.NODE_ENV || 'development'); console.log('开发模式:', process.env.REACT_APP_DEV_MODE || 'true');\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {

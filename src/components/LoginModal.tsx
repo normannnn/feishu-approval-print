@@ -23,8 +23,12 @@ import {
   WechatOutlined,
   EyeInvisibleOutlined,
   EyeTwoTone,
+  SettingOutlined,
+  CheckCircleOutlined,
 } from '@ant-design/icons';
 import { useAuth } from './AuthProvider';
+import FeishuAuthConfig from './FeishuAuthConfig';
+import { feishuAuthService } from '../services/feishuAuthService';
 
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
@@ -38,8 +42,16 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
   const [registerForm] = Form.useForm();
+  const [activeTab, setActiveTab] = useState('email');
+  const [showConfig, setShowConfig] = useState(false);
+  const [isFeishuConfigured, setIsFeishuConfigured] = useState(false);
 
   const { signInWithEmail, signInWithFeishu, signUp } = useAuth();
+
+  // 检查飞书配置状态
+  React.useEffect(() => {
+    setIsFeishuConfigured(feishuAuthService.isConfigured());
+  }, []);
 
   // 邮箱登录
   const handleEmailLogin = async (values: { email: string; password: string }) => {
@@ -71,6 +83,14 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
   const handleFeishuLogin = async () => {
     try {
       setLoading(true);
+
+      // 检查配置
+      if (!isFeishuConfigured) {
+        message.warning('请先配置飞书应用信息');
+        setShowConfig(true);
+        return;
+      }
+
       await signInWithFeishu();
       onClose();
     } catch (error) {
@@ -78,6 +98,12 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 配置完成回调
+  const handleConfigSuccess = () => {
+    setIsFeishuConfigured(true);
+    message.success('飞书认证配置完成');
   };
 
   return (
@@ -225,32 +251,79 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
               </Form.Item>
             </Form>
           </TabPane>
+
+          <TabPane tab="飞书登录" key="feishu">
+            <div style={{ textAlign: 'center', padding: '20px 0' }}>
+              {!isFeishuConfigured ? (
+                <Alert
+                  message="需要配置飞书应用"
+                  description="请先配置飞书开放平台应用信息后才能使用飞书登录"
+                  type="warning"
+                  showIcon
+                  style={{ marginBottom: '20px' }}
+                  action={
+                    <Button
+                      size="small"
+                      type="primary"
+                      icon={<SettingOutlined />}
+                      onClick={() => setShowConfig(true)}
+                    >
+                      配置应用
+                    </Button>
+                  }
+                />
+              ) : (
+                <Alert
+                  message="飞书登录可用"
+                  description="使用飞书账号快速登录，享受企业级协作功能"
+                  type="success"
+                  showIcon
+                  style={{ marginBottom: '20px' }}
+                />
+              )}
+
+              <Button
+                type="primary"
+                size="large"
+                icon={<CheckCircleOutlined />}
+                onClick={handleFeishuLogin}
+                loading={loading}
+                block
+                style={{
+                  height: '40px',
+                  fontSize: '16px',
+                  background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                  border: 'none',
+                }}
+              >
+                {isFeishuConfigured ? '飞书快速登录' : '先配置应用'}
+              </Button>
+
+              {isFeishuConfigured && (
+                <Button
+                  type="link"
+                  size="small"
+                  onClick={() => setShowConfig(true)}
+                  style={{ marginTop: '10px' }}
+                >
+                  <SettingOutlined /> 修改配置
+                </Button>
+              )}
+
+              <Text type="secondary" style={{ display: 'block', marginTop: '15px', fontSize: '12px' }}>
+                飞书登录享受企业级数据同步和团队协作功能
+              </Text>
+            </div>
+          </TabPane>
         </Tabs>
-
-        <Divider>或</Divider>
-
-        <Space direction="vertical" style={{ width: '100%' }}>
-          <Button
-            icon={<WechatOutlined style={{ color: '#1890ff' }} />}
-            onClick={handleFeishuLogin}
-            loading={loading}
-            block
-            size="large"
-            style={{
-              height: '40px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            飞书快速登录
-          </Button>
-
-          <Text type="secondary" style={{ fontSize: '12px', textAlign: 'center', display: 'block' }}>
-            登录即表示同意《用户协议》和《隐私政策》
-          </Text>
-        </Space>
       </div>
+
+      {/* 飞书认证配置弹窗 */}
+      <FeishuAuthConfig
+        visible={showConfig}
+        onClose={() => setShowConfig(false)}
+        onSuccess={handleConfigSuccess}
+      />
     </Modal>
   );
 };

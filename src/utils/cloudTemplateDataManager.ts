@@ -751,6 +751,23 @@ class CloudTemplateDataManager {
     }
     return result;
   }
+
+  /**
+   * 获取最后保存时间
+   */
+  getLastSaveTime(): string | null {
+    return this.syncState.lastSyncTime || this.templates.reduce((latest, template) => {
+      if (!latest || new Date(template.updated_time) > new Date(latest)) {
+        return template.updated_time;
+      }
+      return latest;
+    }, this.printRecords.reduce((latest, record) => {
+      if (!latest || new Date(record.createTime) > new Date(latest)) {
+        return record.createTime;
+      }
+      return latest;
+    }, null as string | null));
+  }
 }
 
 // 创建全局云端数据管理器实例

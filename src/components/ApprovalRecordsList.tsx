@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Button, Space, Tag, Input, Select, DatePicker, Tooltip, message } from 'antd';
+import { Card, Table, Button, Space, Tag, Input, Select, DatePicker, Tooltip, message, Checkbox } from 'antd';
 import {
   SearchOutlined,
   ReloadOutlined,
@@ -7,8 +7,10 @@ import {
   PrinterOutlined,
   SyncOutlined,
   FilterOutlined,
+  ExportOutlined,
 } from '@ant-design/icons';
 import { feishuSDK } from '../services/feishu-sdk';
+import { approvalService, type ApprovalRecord as ApprovalServiceRecord, type ApprovalFilter } from '../services/approvalService';
 import { ApprovalRecord } from '../types';
 import { formatDateTime, formatApprovalStatus, formatRelativeTime } from '../utils/formatters';
 import ApprovalDetailModal from './ApprovalDetailModal';
@@ -18,45 +20,59 @@ const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 const ApprovalRecordsList: React.FC = () => {
-  const [records, setRecords] = useState<ApprovalRecord[]>([]);
+  const [records, setRecords] = useState<ApprovalServiceRecord[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState<ApprovalRecord | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<ApprovalServiceRecord | null>(null);
   const [detailVisible, setDetailVisible] = useState(false);
   const [printVisible, setPrintVisible] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const [typeFilter, setTypeFilter] = useState<string[]>([]);
+  const [dateRange, setDateRange] = useState<[string, string] | null>(null);
+  const [printedFilter, setPrintedFilter] = useState<boolean | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [total, setTotal] = useState(0);
+  const [showFilter, setShowFilter] = useState(false);
+
+  // 构建筛选条件
+  const buildFilter = (): ApprovalFilter => {
+    const filter: ApprovalFilter = {};
+
+    if (statusFilter.length > 0) {
+      filter.status = statusFilter as any;
+    }
+
+    if (typeFilter.length > 0) {
+      filter.type = typeFilter;
+    }
+
+    if (dateRange) {
+      filter.dateRange = dateRange;
+    }
+
+    if (searchKeyword) {
+      filter.applicant = searchKeyword;
+    }
+
+    if (printedFilter !== undefined) {
+      filter.printed = printedFilter;
+    }
+
+    return filter;
+  };
 
   // 加载记录数据
   const loadRecords = async () => {
     setLoading(true);
     try {
-      const result = await feishuSDK.getRecords({
-        pageSize,
-        pageToken: currentPage > 1 ? `${currentPage}` : undefined,
-      });
-
-      // 转换记录数据格式
-      const approvalRecords: ApprovalRecord[] = result.records.map(record => ({
-        record_id: record.record_id,
-        instance_id: record.fields['审批实例ID'] || '',
-        approval_name: record.fields['审批类型'] || '',
-        applicant_name: record.fields['申请人'] || '',
-        applicant_department: record.fields['申请部门'] || '',
-        status: record.fields['审批状态'] || '',
-        create_time: record.fields['申请时间'] || '',
-        approve_time: record.fields['审批时间'] || '',
-        sync_time: record.fields['同步时间'] || '',
-        approval_code: record.fields['审批代码'] || '',
-      }));
-
+      const filter = buildFilter();
+      const approvalRecords = await approvalService.getApprovalRecords(filter);
       setRecords(approvalRecords);
-      setTotal(result.records.length);
+      setTotal(approvalRecords.length);
     } catch (error) {
       console.error('加载记录失败:', error);
-      feishuSDK.showToast('加载记录失败', 'error');
+      message.error('加载记录失败');
     } finally {
       setLoading(false);
     }
